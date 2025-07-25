@@ -159,7 +159,7 @@ export default function CertificatesPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center" data-aos="fade-up">
+        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
             <p className="text-gray-600 mt-1">Manage your company certificates and certifications</p>
@@ -174,14 +174,34 @@ export default function CertificatesPage() {
         </div>
 
         {/* Certificates Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {certificates.map((certificate, index) => (
-            <div 
-              key={certificate._id}
-              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100"
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
+        {certificates.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No certificates found</h3>
+            <p className="text-gray-500 mb-6">Get started by adding your first certificate.</p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 inline-flex items-center space-x-2 shadow-lg hover:shadow-xl"
             >
+              <PlusIcon className="w-5 h-5" />
+              <span className="font-medium">Add Your First Certificate</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {certificates.map((certificate, index) => (
+              <div 
+                key={certificate._id}
+                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animation: 'fadeInUp 0.6s ease-out forwards'
+                }}
+              >
               {/* Certificate Image */}
               <div className="aspect-video bg-gray-200 relative">
                 <img
@@ -226,7 +246,8 @@ export default function CertificatesPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Add Certificate Modal */}
         {showAddModal && (
