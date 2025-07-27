@@ -11,7 +11,6 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
-  GlobeAltIcon,
   ChatBubbleLeftRightIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
@@ -29,10 +28,7 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     type: '',
     label: '',
-    value: '',
-    description: '',
-    isActive: true,
-    order: 1
+    value: ''
   });
 
   useEffect(() => {
@@ -56,7 +52,7 @@ export default function ContactPage() {
     try {
       const response = await api.post('/contact', formData);
       setContactMethods([...contactMethods, response.data.data]);
-      setFormData({ type: '', label: '', value: '', description: '', isActive: true, order: 1 });
+      setFormData({ type: '', label: '', value: '' });
       setShowAddModal(false);
       toast.success('Contact method added successfully!');
     } catch (error) {
@@ -68,13 +64,13 @@ export default function ContactPage() {
   const handleEditContact = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.put(`/contact/${selectedContact.id}`, formData);
+      const response = await api.put(`/contact/${selectedContact._id}`, formData);
       setContactMethods(contactMethods.map(contact => 
-        contact.id === selectedContact.id ? response.data.data : contact
+        contact._id === selectedContact._id ? response.data.data : contact
       ));
       setShowEditModal(false);
       setSelectedContact(null);
-      setFormData({ type: '', label: '', value: '', description: '', isActive: true, order: 1 });
+      setFormData({ type: '', label: '', value: '' });
       toast.success('Contact method updated successfully!');
     } catch (error) {
       console.error('Error updating contact method:', error);
@@ -84,8 +80,8 @@ export default function ContactPage() {
 
   const handleDeleteContact = async () => {
     try {
-      await api.delete(`/contact/${selectedContact.id}`);
-      setContactMethods(contactMethods.filter(contact => contact.id !== selectedContact.id));
+      await api.delete(`/contact/${selectedContact._id}`);
+      setContactMethods(contactMethods.filter(contact => contact._id !== selectedContact._id));
       setShowDeleteModal(false);
       setSelectedContact(null);
       toast.success('Contact method deleted successfully!');
@@ -95,28 +91,12 @@ export default function ContactPage() {
     }
   };
 
-  const toggleContactStatus = async (contact) => {
-    try {
-      const response = await api.put(`/contact/${contact.id}/toggle`);
-      setContactMethods(contactMethods.map(c => 
-        c.id === contact.id ? response.data.data : c
-      ));
-      toast.success(`Contact method ${response.data.data.isActive ? 'activated' : 'deactivated'} successfully!`);
-    } catch (error) {
-      console.error('Error toggling contact status:', error);
-      toast.error('Failed to update contact status');
-    }
-  };
-
   const openEditModal = (contact) => {
     setSelectedContact(contact);
     setFormData({
       type: contact.type,
       label: contact.label,
-      value: contact.value,
-      description: contact.description,
-      isActive: contact.isActive,
-      order: contact.order
+      value: contact.value
     });
     setShowEditModal(true);
   };
@@ -136,11 +116,9 @@ export default function ContactPage() {
       phone: PhoneIcon,
       whatsapp: ChatBubbleLeftRightIcon,
       email: EnvelopeIcon,
-      address: MapPinIcon,
-      website: GlobeAltIcon,
-      social: ChatBubbleLeftRightIcon
+      address: MapPinIcon
     };
-    return icons[type] || GlobeAltIcon;
+    return icons[type] || PhoneIcon;
   };
 
   const getContactColor = (type) => {
@@ -148,9 +126,7 @@ export default function ContactPage() {
       phone: 'bg-blue-500',
       whatsapp: 'bg-green-500',
       email: 'bg-red-500',
-      address: 'bg-purple-500',
-      website: 'bg-indigo-500',
-      social: 'bg-pink-500'
+      address: 'bg-purple-500'
     };
     return colors[type] || 'bg-gray-500';
   };
@@ -189,10 +165,8 @@ export default function ContactPage() {
             const IconComponent = getContactIcon(contact.type);
             return (
               <div 
-                key={contact.id}
-                className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border ${
-                  contact.isActive ? 'border-gray-200' : 'border-red-200 bg-red-50'
-                }`}
+                key={contact._id}
+                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200"
                 data-aos="fade-up"
                 data-aos-delay={index * 100}
               >
@@ -209,12 +183,8 @@ export default function ContactPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        contact.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {contact.isActive ? 'Active' : 'Inactive'}
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        Active
                       </span>
                     </div>
                   </div>
@@ -222,9 +192,9 @@ export default function ContactPage() {
                   {/* Contact Value */}
                   <div className="mb-4">
                     <p className="text-gray-900 font-medium break-all">{contact.value}</p>
-                    {contact.description && (
-                      <p className="text-gray-600 text-sm mt-1">{contact.description}</p>
-                    )}
+                    <p className="text-gray-600 text-sm mt-1">
+                      Created: {new Date(contact.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
 
                   {/* Action Buttons */}
@@ -251,25 +221,29 @@ export default function ContactPage() {
                       <span className="text-sm font-medium">Delete</span>
                     </button>
                   </div>
-
-                  {/* Toggle Status */}
-                  <div className="mt-3">
-                    <button
-                      onClick={() => toggleContactStatus(contact)}
-                      className={`w-full px-3 py-2 rounded-lg transition-colors duration-200 text-sm font-medium ${
-                        contact.isActive
-                          ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100'
-                      }`}
-                    >
-                      {contact.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                  </div>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Empty State */}
+        {contactMethods.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <PhoneIcon className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No contact methods found</h3>
+            <p className="text-gray-500 mb-6">Get started by adding your first contact method.</p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl mx-auto"
+            >
+              <PlusIcon className="w-5 h-5" />
+              <span className="font-medium">Add Contact Method</span>
+            </button>
+          </div>
+        )}
 
         {/* Add Contact Modal */}
         {showAddModal && (
@@ -302,8 +276,6 @@ export default function ContactPage() {
                       <option value="whatsapp">WhatsApp</option>
                       <option value="email">Email</option>
                       <option value="address">Address</option>
-                      <option value="website">Website</option>
-                      <option value="social">Social Media</option>
                     </select>
                   </div>
                   
@@ -331,33 +303,6 @@ export default function ContactPage() {
                       onChange={(e) => setFormData({...formData, value: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-black"
                       placeholder="Contact information"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-black"
-                      placeholder="Additional information"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Order
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) => setFormData({...formData, order: parseInt(e.target.value)})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-black"
-                      min="1"
                       required
                     />
                   </div>
@@ -413,8 +358,6 @@ export default function ContactPage() {
                       <option value="whatsapp">WhatsApp</option>
                       <option value="email">Email</option>
                       <option value="address">Address</option>
-                      <option value="website">Website</option>
-                      <option value="social">Social Media</option>
                     </select>
                   </div>
                   
@@ -440,32 +383,6 @@ export default function ContactPage() {
                       value={formData.value}
                       onChange={(e) => setFormData({...formData, value: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-black"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-black"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Order
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) => setFormData({...formData, order: parseInt(e.target.value)})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-black"
-                      min="1"
                       required
                     />
                   </div>
@@ -524,27 +441,21 @@ export default function ContactPage() {
                       <p className="font-medium text-gray-900 break-all">{selectedContact.value}</p>
                     </div>
                     
-                    {selectedContact.description && (
-                      <div className="bg-gray-50 rounded-xl p-4">
-                        <p className="text-sm text-gray-500 mb-1">Description</p>
-                        <p className="text-gray-900">{selectedContact.description}</p>
-                      </div>
-                    )}
-                    
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-sm text-gray-500 mb-1">Status</p>
-                      <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
-                        selectedContact.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {selectedContact.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      <p className="text-sm text-gray-500 mb-1">Created Date</p>
+                      <p className="text-gray-900">{new Date(selectedContact.createdAt).toLocaleDateString()}</p>
                     </div>
                     
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-sm text-gray-500 mb-1">Display Order</p>
-                      <p className="font-medium text-gray-900">{selectedContact.order}</p>
+                      <p className="text-sm text-gray-500 mb-1">Last Updated</p>
+                      <p className="text-gray-900">{new Date(selectedContact.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm text-gray-500 mb-1">Status</p>
+                      <span className="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
+                        Active
+                      </span>
                     </div>
                   </div>
                 </div>
